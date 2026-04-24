@@ -20,7 +20,7 @@ export const protect = async (req, res, next) => {
             // 3. Search the user in the DB after the ID in the token and add in object
             // Using .select("-password") to don't send the password in the response
 
-            req.user = await user.findById(decoded.id).select("-password");
+            req.user = await User.findById(decoded.id).select("-password");
 
             next(); // All is ok, go to next middleware (controller)
         } catch (error) {
