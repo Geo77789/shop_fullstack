@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import asyncHandler from "express-async-handler";
 import generateToken from "../utils/generateToken.js";
 
 
@@ -56,6 +57,24 @@ export const registerUser = async (req, res) => {
 };
 
 
+
+
+export const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        user.firstName = req.body.firstName || user.firstName;
+        user.lastName = req.body.lastName || user.lastName;
+        user.address = req.body.address || user.address;
+
+        const updateUser = await user.save();
+
+        res.json(updateUser);
+    } else {
+        res.status(404);
+        throw new Error("User not found");
+    }
+});
 
 
 

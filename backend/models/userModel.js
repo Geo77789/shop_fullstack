@@ -22,6 +22,20 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
+    address: {
+        type: String,
+        default: ""
+    },
+
+    firstName: {
+        type: String,
+        default: ""
+    },
+
+    lastName: {
+        type: String,
+        default: ""
+    },
 
     isAdmin: {
         type: Boolean,

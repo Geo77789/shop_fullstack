@@ -25,11 +25,12 @@ export const protect = async (req, res, next) => {
             next(); // All is ok, go to next middleware (controller)
         } catch (error) {
             console.error(error);
-            res.status(401).json({ message: "Not authorized" });
+            res.status(401);
+            throw new Error("Not authorized");
         }
     }
     if (!token) {
-        res.status(401).json({ message: "Not authorized, no token" });
+        return res.status(401).json({ message: "Not authorized, no token" });
     }
 };
 
