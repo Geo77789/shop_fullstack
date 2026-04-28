@@ -4,38 +4,55 @@ import generateToken from "../utils/generateToken.js";
 
 
 
+export const getUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("-password");
+
+    if (user) {
+        res.json(user);
+    } else {
+        res.status(404);
+        throw new Error("User not found");
+    }
+});
+
+
+
 // User login
 export const authUser = async (req, res) => {
     try {
-        const { email, password, } = req.body;
-        // find the user by email
+        const { email, password } = req.body;
+
         const user = await User.findOne({ email });
-        // if user exist / check the password if match with user
-        // use && to check the both conditions
+
         if (user && (await user.matchPassword(password))) {
             res.json({
                 _id: user._id,
                 username: user.username,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                address: user.address,
+                isAdmin: user.isAdmin,
                 token: generateToken(user._id),
             });
         } else {
-            // user not found or password / email incorrect
             res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-
 };
 
 //Admin login
+
 export const registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
+
         const userExists = await User.findOne({ email });
+
         if (userExists) {
             return res.status(400).json({ message: "User already exists" });
-
         }
 
         const user = await User.create({ username, email, password });
@@ -45,15 +62,16 @@ export const registerUser = async (req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                address: user.address,
                 isAdmin: user.isAdmin,
                 token: generateToken(user._id),
             });
         }
-
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-
 };
 
 
@@ -67,9 +85,17 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
         user.lastName = req.body.lastName || user.lastName;
         user.address = req.body.address || user.address;
 
-        const updateUser = await user.save();
+        const updatedUser = await user.save();
 
-        res.json(updateUser);
+        res.json({
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            address: updatedUser.address,
+            isAdmin: updatedUser.isAdmin,
+        });
     } else {
         res.status(404);
         throw new Error("User not found");

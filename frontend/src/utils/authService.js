@@ -1,29 +1,35 @@
+import { apiRequest } from "../api/client";
 
-
-export const loginUser = async (email, password) => {
-    const res = await fetch("/api/user/login", {
+export const loginUser = (email, password) => {
+    return apiRequest("/users/login", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
+
     });
 
+};
 
-
-    return res.json();
-}
 
 
 export const registerUser = async (data) => {
-    const res = await fetch("/api/users/register", {
+    return apiRequest("/users/register", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+
     });
 
-    return res.json();
+
 }
+
+
+export const getProfile = () => {
+    return apiRequest("/users/profile", {
+        headers: {
+            Authorization: `Bearer ${JSON.parse(localStorage.get.Item("user")).token}`,
+        },
+    });
+}
+
+
+
 

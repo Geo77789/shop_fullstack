@@ -5,38 +5,46 @@ import Cart from "./Components/Cart/Cart";
 import Login from "./Components/Pages/Login";
 import Register from "./Components/Pages/Register";
 import Profile from "./Components/Pages/Profile";
-import Navbar from "./Components/Navbar";
+import Navbar from "./Components/Pages/Navbar.jsx";
 import ProtectedRoute from "./Components/ProtectedRoutes";
+import { AuthProvider } from "./context/authContext.jsx";
+import AdminScreen from "./Components/AdminDashboard/AdminScreen.jsx";
 
 function App() {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
   return (
-    <BrowserRouter>
-      <Navbar />
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
 
-      <h1>Welcome to Shopping</h1>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/product/:id" element={<Product />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
-              <Cart />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/product/:id" element={<Product />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={user && user.isAdmin ? <AdminScreen /> : <Navbar to="/" />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

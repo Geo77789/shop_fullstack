@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/authContext";
 
 function Navbar() {
   const navigate = useNavigate();
-
-  const user = JSON.parse(localStorage.getItem("user"));
+  const { user, logout } = useAuth();
 
   const logoutHandler = () => {
-    localStorage.removeItem("user");
+    logout();
     navigate("/login");
   };
 
@@ -24,6 +24,14 @@ function Navbar() {
         <>
           <Link to="/login">Login</Link>
           <Link to="/register">Register</Link>
+        </>
+      )}
+
+      {user && user.isAdmin && (
+        <>
+          <Link to="/admin" style={{ color: "gold", fontWeight: "bold" }}>
+            ADMIN DASHBOARD: {user.username}
+          </Link>
         </>
       )}
     </nav>

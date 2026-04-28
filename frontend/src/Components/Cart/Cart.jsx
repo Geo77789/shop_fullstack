@@ -1,50 +1,130 @@
 import { useEffect, useState } from "react";
-import { getCart } from "../../utils/cartService";
+import { getCart, addToCart, removeFromCart } from "../../utils/cartUtils";
 
 function Cart() {
   const [cart, setCart] = useState([]);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
+
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const data = await getCart();
+      setCart(data.items || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCartData = async () => {
-      try {
-        const data = await getCart();
-        setCart(data.items || []);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCartData();
+    fetchCart();
   }, []);
 
-  if (loading) return <p>Loading cart...</p>;
+  const handleQuantityChange = async (productId, delta) => {
+    if (updatingId) return; // if something is being updated, don't update again
+
+    try {
+      setUpdatingId(true); // set updatingId to prevent concurrent updates
+      const updatedCart = await addToCart(productId, delta);
+      setCart(updatedCart.items || []);
+    } catch (err) {
+      setError(err.message);
+
+      fetchCart();
+    } finally {
+      setUpdatingId(false); // unlock the buttons
+    }
+  };
+
+  const handleRemove = async (productId) => {
+    if (updatingId) return;
+    try {
+      setUpdatingId(true);
+      const updatedCart = await removeFromCart(productId);
+      setCart(updatedCart?.items || []);
+    } catch (err) {
+      setError(err.message);
+      fetchCart();
+    } finally {
+      setUpdatingId(false);
+    }
+  };
 
   const total = cart.reduce(
-    (acc, item) => acc + (item.product?.price || 0) * item.quantity,
+    (acc, item) => acc + (item.product?.price || 0) * (item.quantity || 0),
     0,
   );
 
+  if (loading) return <p>Loading cart...</p>;
+
   return (
     <div>
-      <h1>Cart</h1>
-
+      <h1>Shopping Cart</h1>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {!error && cart.length === 0 && <p>Cart is empty</p>}
 
-      {cart.map((item) => (
-        <div key={item._id}>
-          <h3>{item.product.name}</h3>
-          <p>Qty: {item.quantity}</p>
-          <p>Price: {item.product.price}</p>
-        </div>
-      ))}
+      {cart.length === 0 ? (
+        <p>Cart is empty</p>
+      ) : (
+        cart.map((item) => {
+          // verify if product was correctly loaded
+          if (!item.product || typeof item.product === "string") {
+            return <div key={item._id}>Loading product details...</div>;
+          }
 
-      <h2>Total: {total}</h2>
+          return (
+            <div
+              key={item.product._id}
+              style={{ border: "1px solid #ccc", margin: 10, padding: 10 }}
+            >
+              <h3>Product: {item.product.name}</h3>
+              <img
+                src={item.product.image}
+                alt={item.product.name}
+                width="50"
+              />
+              <p>Price: ${(item.product.price || 0).toFixed(2)}</p>
+              <p>
+                Quantity:
+                <button
+                  onClick={() => handleQuantityChange(item.product._id, -1)}
+                  disabled={updatingId}
+                >
+                  -
+                </button>
+                <span>{item.quantity}</span>
+                <button
+                  onClick={() => handleQuantityChange(item.product._id, +1)}
+                  disabled={
+                    updatingId || item.quantity >= item.product.countInStock
+                  }
+                >
+                  +
+                </button>
+                {item.quantity >= item.product.countInStock && (
+                  <span
+                    style={{ color: "orange", fontSize: "12px", opacity: 0.5 }}
+                  >
+                    {" "}
+                    Maximum
+                  </span>
+                )}
+              </p>
+              <button
+                onClick={() => handleRemove(item.product._id)}
+                disabled={updatingId}
+                style={{ cursor: updatingId ? "not-allowed" : "pointer" }}
+              >
+                {updatingId ? "Processing... " : "Remove from cart"}
+              </button>
+            </div>
+          );
+        })
+      )}
+
+      <h2>Total: ${total.toFixed(2)}</h2>
     </div>
   );
 }

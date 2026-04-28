@@ -6,6 +6,7 @@ import productRoutes from "./routes/productRoutes.js";
 import cors from "cors";
 import cartRoutes from "./routes/cartRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
+import adminProductRoutes from "./routes/adminProductRoutes.js";
 
 
 
@@ -42,6 +43,7 @@ app.get("/", (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/admin/products", adminProductRoutes);
 // API routes
 
 

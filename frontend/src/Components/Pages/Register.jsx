@@ -13,31 +13,21 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = await registerUser(form);
-
-    if (data._id) {
-      alert("User created successfully");
+    try {
+      await registerUser(form);
       navigate("/login");
+    } catch (err) {
+      alert(err.message);
     }
   };
 
   return (
     <form>
-      <h1>Create an account</h1>
-
       <input name="username" placeholder="username" onChange={handleChange} />
       <input name="email" placeholder="email" onChange={handleChange} />
       <input name="password" placeholder="password" onChange={handleChange} />
-      <input
-        name="firstName"
-        placeholder="first name"
-        onChange={handleChange}
-      />
-      <input name="lastName" placeholder="last name" onChange={handleChange} />
-      <input name="address" placeholder="address" onChange={handleChange} />
-
       <button type="submit" onClick={handleSubmit}>
-        Welcome
+        Register
       </button>
     </form>
   );

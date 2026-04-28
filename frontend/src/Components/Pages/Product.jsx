@@ -36,7 +36,7 @@ function Product() {
       <p>Price: {product.price}</p>
       <p>Stock: {product.countInStock}</p>
 
-      <button onClick={() => addToCart(product)}>Add to Cart</button>
+      <button onClick={() => addToCart(product._id, 1)}>Add to Cart</button>
     </div>
   );
 }
