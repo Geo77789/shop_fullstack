@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./Components/Pages/Home";
 import Product from "./Components/Pages/Product";
 import Cart from "./Components/Cart/Cart";
@@ -9,9 +9,12 @@ import Navbar from "./Components/Pages/Navbar.jsx";
 import ProtectedRoute from "./Components/ProtectedRoutes";
 import { AuthProvider } from "./context/authContext.jsx";
 import AdminScreen from "./Components/AdminDashboard/AdminScreen.jsx";
+import OrderDetails from "./Components/Pages/OrderDetails.jsx";
+// import { useAuth } from "./context/authContext.jsx";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
+  // const { user } = useAuth();
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -40,8 +43,11 @@ function App() {
           />
           <Route
             path="/admin"
-            element={user && user.isAdmin ? <AdminScreen /> : <Navbar to="/" />}
+            element={
+              user && user.isAdmin ? <AdminScreen /> : <Navigate to="/" />
+            }
           />
+          <Route path="/order/:id" element={<OrderDetails />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

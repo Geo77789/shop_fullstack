@@ -1,11 +1,32 @@
 import { useEffect, useState } from "react";
 import { getCart, addToCart, removeFromCart } from "../../utils/cartUtils";
+import { placeOrder } from "../../utils/cartUtils";
+import { useNavigate } from "react-router-dom";
 
 function Cart() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const navigate = useNavigate();
+
+  const handleCheckout = async () => {
+    try {
+      setUpdatingId(true);
+      const createOrder = await placeOrder();
+
+      alert(`Order placed successfully! Order ID: ${createOrder._id}`);
+
+      // empty the cart (backend already does this)
+      setCart([]);
+
+      navigate("/order/${createdOrder._id}");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUpdatingId(false);
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -62,11 +83,14 @@ function Cart() {
 
   return (
     <div>
-      <h1>Shopping Cart</h1>
+      <h1> 🛒 Shopping Cart</h1>
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {cart.length === 0 ? (
-        <p>Cart is empty</p>
+        <p>
+          Cart is empty: Return to <span>Home Page</span>
+          <span>Products Page</span>
+        </p>
       ) : (
         cart.map((item) => {
           // verify if product was correctly loaded
@@ -108,7 +132,7 @@ function Cart() {
                     style={{ color: "orange", fontSize: "12px", opacity: 0.5 }}
                   >
                     {" "}
-                    Maximum
+                    stock reached the limit
                   </span>
                 )}
               </p>
@@ -125,6 +149,23 @@ function Cart() {
       )}
 
       <h2>Total: ${total.toFixed(2)}</h2>
+      <button
+        onClick={() => handleCheckout}
+        disabled={cart.length === 0 || updatingId}
+        style={{
+          backgroundColor: "#28a745",
+          color: "white",
+          padding: "15px",
+          width: "25%",
+          fontSize: "1.2rem",
+          marginTop: "20px",
+          cursor: "pointer",
+          border: "none",
+          borderRadius: "8px",
+        }}
+      >
+        {updatingId ? "Processing... " : "Checkout"}
+      </button>
     </div>
   );
 }

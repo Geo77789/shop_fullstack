@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 // import { Link } from "react-router-dom";
-// import { addToCart } from "../../utils/cartUtils";
 import { filterItems } from "../../utils/searchUtils";
 import ProductCard from "./ProductCard";
-// import Products from "./Products";
 
 function Home() {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState(""); // input default state
+  const [selectedCategory, setSelectedCategory] = useState("All"); // useState for selected category
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -19,25 +18,60 @@ function Home() {
     fetchProducts();
   }, []);
 
+  // Extract unique categories from products
+  const categories = ["All", ...new Set(products.map((p) => p.category))];
+
   // Apply the filtering before rendering
-  const filteredProducts = filterItems(products, searchTerm, "name");
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      selectedCategory === "All" || product.category === selectedCategory;
+
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Discover our Products</h1>
-
-      <input
-        type="text"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{
-          padding: "10px",
-          marginBottom: "30px",
-          width: "100%",
-          maxWidth: "400px",
-        }}
-      />
+      <h1 style={{ textAlign: "center" }}>Welcome to Shopping Store</h1>
+      <h2>Discover our products</h2>
+      <h3>New Brands Arrive Every Month 🛍️</h3>
+      <div>
+        <h4>Search by Category:</h4>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "20px",
+              border: "1px solid #007bff",
+              backgroundColor: selectedCategory === cat ? "#007bff" : "white",
+              color: selectedCategory === cat ? "white" : "#007bff",
+              cursor: "pointer",
+              textTransform: "capitalize",
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+      <div>
+        <h4>Search Products:</h4>
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: "10px",
+            marginBottom: "30px",
+            width: "100%",
+            maxWidth: "400px",
+          }}
+        />
+      </div>
 
       <div
         style={{

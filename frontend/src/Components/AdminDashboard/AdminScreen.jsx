@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "../../utils/productUtils";
 import { getSummary } from "../../utils/adminUtils";
+import { filterItems } from "../../utils/searchUtils";
 import {
   loadDashboardData,
   handleDelete,
@@ -8,18 +9,27 @@ import {
   handleUpdate,
 } from "./adminFunctions";
 
-// test@test.com - 12345
-// test1@test1.com - 123456
-// test2@test2.com - 1234567
-
 function AdminScreen() {
   const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
+  const displayedProducts = filterItems(products, searchTerm);
+
+  // Statistics
+  const totalProfit = orders.reduce((acc, o) => acc + o.totalPrice, 0);
+  const totalItemsSold = orders.reduce(
+    (acc, o) =>
+      acc + o.OrderItems.reduce((sum, item) => sum + item.quantity, 0),
+    0,
+  );
+  const pendingOrders = orders.filter((o) => o.status === "Pending").length;
+  const deliveredOrders = orders.filter((o) => o.status === "Delivered").length;
 
   const fetchProducts = async () => {
     const data = await getProducts();
@@ -31,43 +41,141 @@ function AdminScreen() {
     setSummary(data);
   };
 
+  const fetchOrders = async () => {
+    const res = await fetch("/api/orders", {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    const data = await res.json();
+    setOrders(data);
+  };
+
+  const handleUpdateStatus = async (id) => {
+    if (!window.confirm("Mark this order as delivered?")) return;
+    try {
+      const res = await fetch(`/api/orders/${id}/deliver`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (res.ok) fetchOrders();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   useEffect(() => {
     loadDashboardData(setProducts, setSummary, setLoading, setError);
+    fetchOrders();
   }, []);
 
-  if (loading) return <p> Loading the products...</p>;
+  if (loading) return <p>Loading Dashboard...</p>;
 
   return (
     <div style={{ padding: "20px" }}>
-      {" "}
-      <h1>Admin Dashboard - Hello, </h1>
+      <h1>Admin Dashboard - Hello, {user.username}</h1>
+
+      {/* 1. SELLING STATISTICS */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "20px",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "15px",
           marginBottom: "30px",
         }}
       >
-        <div>
-          <h4>Total Products/Items:</h4>
-          <p>{summary.totalProducts || 0}</p>
+        <div
+          style={{
+            background: "#e3f2fd",
+            padding: "15px",
+            borderRadius: "8px",
+          }}
+        >
+          <h4>Total Profit</h4>
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+            ${totalProfit.toFixed(2)}
+          </p>
         </div>
-        <div>
-          <h4>Total Stock:</h4>
-          <p>{summary.totalStock || 0} units</p>
+        <div
+          style={{
+            background: "#f1f8e9",
+            padding: "15px",
+            borderRadius: "8px",
+          }}
+        >
+          <h4>Items Sold</h4>
+          <p style={{ fontSize: "1.5rem" }}>{totalItemsSold}</p>
         </div>
-        <div>
-          <h4>Inventory Value $:</h4>
-          <p>${(summary.totalValue || 0).toFixed(2)}</p>
+        <div
+          style={{
+            background: "#fff3e0",
+            padding: "15px",
+            borderRadius: "8px",
+          }}
+        >
+          <h4>Pending</h4>
+          <p style={{ fontSize: "1.5rem" }}>{pendingOrders}</p>
         </div>
-        <div>
-          <h4>Total Users:</h4>
-          <p>{summary.userCount || 0}</p>
+        <div
+          style={{
+            background: "#e8f5e9",
+            padding: "15px",
+            borderRadius: "8px",
+          }}
+        >
+          <h4>Delivered</h4>
+          <p style={{ fontSize: "1.5rem" }}>{deliveredOrders}</p>
         </div>
       </div>
-      {/* 2. Table section */}
-      <div>
+
+      {/* 2. ORDER MANAGEMENT */}
+      <h2>Order Management</h2>
+      <table
+        style={{
+          width: "100%",
+          marginBottom: "50px",
+          borderCollapse: "collapse",
+        }}
+      >
+        <thead>
+          <tr style={{ background: "#eee", textAlign: "left" }}>
+            <th style={{ padding: "10px" }}>ID</th>
+            <th>User</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => (
+            <tr key={order._id} style={{ borderBottom: "1px solid #ddd" }}>
+              <td style={{ padding: "10px" }}>{order._id.slice(-5)}</td>
+              <td>{order.user?.username || "Deleted User"}</td>
+              <td>${order.totalPrice.toFixed(2)}</td>
+              <td>
+                <span
+                  style={{
+                    color: order.status === "Delivered" ? "green" : "orange",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {order.status}
+                </span>
+              </td>
+              <td>
+                {order.status === "Pending" && (
+                  <button onClick={() => handleUpdateStatus(order._id)}>
+                    Deliver
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <hr />
+
+      {/* 3. PRODUCT INVENTORY */}
+      <div style={{ marginTop: "30px" }}>
         <div
           style={{
             display: "flex",
@@ -75,153 +183,96 @@ function AdminScreen() {
             alignItems: "center",
           }}
         >
-          {editingProduct && (
-            <div
-              style={{
-                background: "#f9f9f9",
-                padding: "20px",
-                marginBottom: "20px",
-                border: "1px solid #7ac0e5",
-                borderRadius: "8px",
-              }}
-            >
-              <h3>Edit Product: {editingProduct.name}</h3>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                <input
-                  type="text"
-                  value={editingProduct.name}
-                  onChange={(e) =>
-                    setEditingProduct({
-                      ...editingProduct,
-                      name: e.target.value,
-                    })
-                  }
-                  placeholder="Name"
-                />
-                <span>Price:</span>
-                <input
-                  type="number"
-                  value={editingProduct.price}
-                  onChange={(e) =>
-                    setEditingProduct({
-                      ...editingProduct,
-                      price: Number(e.target.value),
-                    })
-                  }
-                  placeholder="Price"
-                />
-                <span>Stock:</span>
-                <input
-                  type="number"
-                  value={editingProduct.countInStock}
-                  onChange={(e) =>
-                    setEditingProduct({
-                      ...editingProduct,
-                      countInStock: Number(e.target.value),
-                    })
-                  }
-                  placeholder="Stock"
-                />
-
-                <button
-                  onClick={() =>
-                    handleUpdate(
-                      editingProduct._id,
-                      editingProduct,
-                      fetchProducts,
-                      fetchSummary,
-                      setEditingProduct,
-                    )
-                  }
-                  style={{ backgroundColor: "#28a745", color: "white" }}
-                >
-                  Save Changes
-                </button>
-
-                <button onClick={() => setEditingProduct(null)}>Cancel</button>
-              </div>
-            </div>
-          )}
-
-          <h2>Management Products Table:</h2>
+          <h2>Product Inventory</h2>
           <button
             onClick={() => handleCreate(fetchProducts, fetchSummary)}
             style={{
-              padding: "10px",
-              backgroundColor: "#28a745",
+              background: "#28a745",
               color: "white",
-              border: "none",
-              borderRadius: "4px",
+              padding: "10px",
+              borderRadius: "5px",
               cursor: "pointer",
             }}
           >
-            + Add new product
+            + Add New Product
           </button>
         </div>
 
-        <table
-          style={{
-            width: "100%",
-            marginTop: "20px",
-            borderCollapse: "collapse",
-          }}
-        >
+        {editingProduct && (
+          <div
+            style={{
+              background: "#f0f0f0",
+              padding: "20px",
+              margin: "20px 0",
+              borderRadius: "8px",
+              border: "1px solid #007bff",
+            }}
+          >
+            <h3>Edit: {editingProduct.name}</h3>
+            <input
+              type="text"
+              value={editingProduct.name}
+              onChange={(e) =>
+                setEditingProduct({ ...editingProduct, name: e.target.value })
+              }
+            />
+            <input
+              type="number"
+              value={editingProduct.price}
+              onChange={(e) =>
+                setEditingProduct({
+                  ...editingProduct,
+                  price: Number(e.target.value),
+                })
+              }
+            />
+            <button
+              onClick={() =>
+                handleUpdate(
+                  editingProduct._id,
+                  editingProduct,
+                  fetchProducts,
+                  fetchSummary,
+                  setEditingProduct,
+                )
+              }
+            >
+              Save
+            </button>
+            <button onClick={() => setEditingProduct(null)}>Cancel</button>
+          </div>
+        )}
+
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ padding: "10px", margin: "20px 0", width: "300px" }}
+        />
+
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: "#eee", textAlign: "left" }}>
               <th style={{ padding: "10px" }}>ID</th>
               <th>Img</th>
               <th>Name</th>
               <th>Price</th>
-              <th>Category</th>
               <th>Stock</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
+            {displayedProducts.map((product) => (
               <tr key={product._id} style={{ borderBottom: "1px solid #ccc" }}>
                 <td style={{ padding: "10px" }}>{product._id.slice(-5)}</td>
                 <td>
-                  <img src={product.image} width="30" alt={product.name} />
+                  <img src={product.image} width="30" alt="" />
                 </td>
                 <td>{product.name}</td>
-                <td>
-                  <span
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: "12px",
-                      backgroundColor: "#5be1a7",
-                      fontSize: "12px",
-                      border: "1px solid #050a08",
-                    }}
-                  >
-                    ${product.price.toFixed(2)}
-                  </span>
-                </td>
-                <td>
-                  <span
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: "12px",
-                      backgroundColor: "#f0f0f0",
-                      fontSize: "12px",
-                      border: "1px solid #ddd",
-                    }}
-                  >
-                    {product.category}
-                  </span>
-                </td>
+                <td>${product.price.toFixed(2)}</td>
                 <td
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "12px",
-                    backgroundColor: "#7ac0e5",
-                    fontSize: "12px",
-                    // border: "0.5px solid #2d8e67",
-                    textAlign: "center",
-                    color: product.countInStock <= 5 ? "red" : "white",
-                    fontWeight: "bold",
-                  }}
+                  style={{ color: product.countInStock < 5 ? "red" : "black" }}
                 >
                   {product.countInStock}
                 </td>
@@ -254,6 +305,35 @@ function AdminScreen() {
 
 export default AdminScreen;
 
+/* <div style={{ padding: "20px" }}>
+      {" "}
+      <h1>Admin Dashboard - Hello, {user.username}</h1>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "20px",
+          marginBottom: "30px",
+        }}
+      >
+        <div>
+          <h4>Total Products/Items:</h4>
+          <p>{summary.totalProducts || 0}</p>
+        </div>
+        <div>
+          <h4>Total Stock:</h4>
+          <p>{summary.totalStock || 0} units</p>
+        </div>
+        <div>
+          <h4>Inventory Value $:</h4>
+          <p>${(summary.totalValue || 0).toFixed(2)}</p>
+        </div>
+        <div>
+          <h4>Total Users:</h4>
+          <p>{summary.userCount || 0}</p>
+        </div>
+      </div> */
+
 //   return (
 //     <div style={{ display: "flex", minHeight: "100vh" }}>
 //       {/* Sidebar-ul de Admin */}
@@ -267,16 +347,16 @@ export default AdminScreen;
 //       >
 //         <h2>Admin Menu</h2>
 //         <ul style={{ listStyle: "none", padding: 0 }}>
-//           <li style={{ padding: "10px 0" }}>📦 Produse</li>
-//           <li style={{ padding: "10px 0" }}>👥 Utilizatori</li>
-//           <li style={{ padding: "10px 0" }}>📊 Statistici</li>
+//           <li style={{ padding: "10px 0" }}>📦 </li>
+//           <li style={{ padding: "10px 0" }}>👥 </li>
+//           <li style={{ padding: "10px 0" }}>📊 </li>
 //         </ul>
 //       </div>
 
-//       {/* Conținutul Tabelului (cel pe care l-am scris anterior) */}
+//       {/*) */}
 //       <div style={{ flex: 1, padding: "20px" }}>
 //         <h1>Management Produse</h1>
-//         {/* AICI pui tabelul tău cu produse */}
+//         {/*  */}
 //       </div>
 //     </div>
 //   );

@@ -1,3 +1,5 @@
+import { addToCart } from "../../utils/cartUtils";
+
 const ProductCard = ({ product }) => {
   return (
     <div
@@ -19,9 +21,11 @@ const ProductCard = ({ product }) => {
       />
       <h3 style={{ fontSize: "1.1rem", margin: "10px 0" }}>{product.name}</h3>
       <p style={{ fontWeight: "bold", color: "#28a745" }}>
-        ${product.price.toFixed(2)}
+        🏷️ ${product.price.toFixed(2)}
+        <p>left in stock: {product.countInStock}</p>
       </p>
       <button
+        onClick={() => addToCart(product._id, 1)}
         style={{
           backgroundColor: "#007bff",
           color: "white",

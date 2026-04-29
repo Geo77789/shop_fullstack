@@ -2,7 +2,7 @@
 
 
 
-// cartUtils.js
+// Cart Logic
 export const getCart = async () => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     if (!user) throw new Error("User not authenticated!");
@@ -18,6 +18,7 @@ export const getCart = async () => {
     return res.json();
 };
 
+// Add to Cart Logic
 export const addToCart = async (productId, quantity = 1) => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     if (!user) throw new Error("User not authenticated!");
@@ -36,6 +37,8 @@ export const addToCart = async (productId, quantity = 1) => {
     return res.json();
 };
 
+
+//Remove from Cart Logic
 export const removeFromCart = async (productId) => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     if (!user) throw new Error("User not authenticated!");
@@ -51,3 +54,23 @@ export const removeFromCart = async (productId) => {
 
     return res.json();
 };
+
+// Place the Order Logic
+export const placeOrder = async () => {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (!user) throw new Error("User not authenticated!");
+
+
+    const res = await fetch("api/orders", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`,
+        },
+    });
+
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Error to place order");
+    }
+}

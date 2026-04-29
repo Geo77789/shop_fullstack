@@ -25,7 +25,7 @@ export const registerUser = async (data) => {
 export const getProfile = () => {
     return apiRequest("/users/profile", {
         headers: {
-            Authorization: `Bearer ${JSON.parse(localStorage.get.Item("user")).token}`,
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
     });
 }

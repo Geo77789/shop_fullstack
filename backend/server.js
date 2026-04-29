@@ -7,6 +7,7 @@ import cors from "cors";
 import cartRoutes from "./routes/cartRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import adminProductRoutes from "./routes/adminProductRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 
 
@@ -24,10 +25,10 @@ connectDB();
 const app = express();
 
 app.use(cors());
-app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true
-}));
+// app.use(cors({
+//     origin: "http://localhost:5173",
+//     credentials: true
+// }));
 
 //Middleware for json in body
 app.use(express.json());
@@ -44,6 +45,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin/products", adminProductRoutes);
+app.use("/api/orders", orderRoutes);  // Activate route for orders
 // API routes
 
 

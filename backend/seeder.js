@@ -69,7 +69,7 @@ const importData = async () => {
 
 const destroyData = async () => {
     try {
-        await Product.deleteMany();
+        await Cart.deleteMany();
         console.log("Products removed");
         process.exit();
     } catch (error) {
