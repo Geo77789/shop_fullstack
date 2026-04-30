@@ -7,7 +7,7 @@ function Profile() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    // Dacă nu avem user sau token, oprim execuția aici
+    // If no user or token, stop executing
     if (!user || !user.token) return;
 
     const fetchMyOrders = async () => {

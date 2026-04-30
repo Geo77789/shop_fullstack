@@ -17,6 +17,17 @@ function AdminScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const AVAILABLE_CATEGORIES = [
+    "Electronics",
+    "Clothing",
+    "Home",
+    "Books",
+    "Beauty",
+    "Sports",
+    "Men Clothing",
+    "Women Clothing",
+    "Kids Clothing",
+  ];
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const displayedProducts = filterItems(products, searchTerm);
@@ -72,16 +83,44 @@ function AdminScreen() {
   return (
     <div style={{ padding: "20px" }}>
       <h1>Admin Dashboard - Hello, {user.username}</h1>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "20px",
+          marginBottom: "30px",
+        }}
+      >
+        <div>
+          <h4>Total Products/Items:</h4>
+          <p>{summary.totalProducts || 0}</p>
+        </div>
+        <div>
+          <h4>Total Stock:</h4>
+          <p>{summary.totalStock || 0} units</p>
+        </div>
+        <div>
+          <h4>Inventory Value $:</h4>
+          <p>${(summary.totalValue || 0).toFixed(2)}</p>
+        </div>
+        <div>
+          <h4>Total Users:</h4>
+          <p>{summary.userCount || 0}</p>
+        </div>
+      </div>
 
       {/* 1. SELLING STATISTICS */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(5, 1fr)",
           gap: "15px",
           marginBottom: "30px",
         }}
       >
+        <div>
+          <h3>Order Management: </h3>
+        </div>
         <div
           style={{
             background: "#e3f2fd",
@@ -127,7 +166,7 @@ function AdminScreen() {
       </div>
 
       {/* 2. ORDER MANAGEMENT */}
-      <h2>Order Management</h2>
+
       <table
         style={{
           width: "100%",
@@ -147,7 +186,7 @@ function AdminScreen() {
         <tbody>
           {orders.map((order) => (
             <tr key={order._id} style={{ borderBottom: "1px solid #ddd" }}>
-              <td style={{ padding: "10px" }}>{order._id.slice(-5)}</td>
+              <td style={{ padding: "10px" }}>(#{order._id.slice(-5)})</td>
               <td>{order.user?.username || "Deleted User"}</td>
               <td>${order.totalPrice.toFixed(2)}</td>
               <td>
@@ -197,7 +236,7 @@ function AdminScreen() {
             + Add New Product
           </button>
         </div>
-
+        {/* EDITING FORM */}
         {editingProduct && (
           <div
             style={{
@@ -208,6 +247,25 @@ function AdminScreen() {
               border: "1px solid #007bff",
             }}
           >
+            <label>Category:</label>
+            <select
+              value={editingProduct.category}
+              onChange={(e) =>
+                setEditingProduct({
+                  ...editingProduct,
+                  category: e.target.value,
+                })
+              }
+              style={{ padding: "10px", width: "10%", marginBottom: "10px" }}
+            >
+              <option value="">Select a category</option>
+              {AVAILABLE_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
             <h3>Edit: {editingProduct.name}</h3>
             <input
               type="text"
@@ -215,17 +273,34 @@ function AdminScreen() {
               onChange={(e) =>
                 setEditingProduct({ ...editingProduct, name: e.target.value })
               }
+              style={{ width: "50%", marginBottom: "10px" }}
             />
-            <input
-              type="number"
-              value={editingProduct.price}
-              onChange={(e) =>
-                setEditingProduct({
-                  ...editingProduct,
-                  price: Number(e.target.value),
-                })
-              }
-            />
+            <div>
+              <span style={{ marginLeft: "10px" }}>Price:</span>
+              <input
+                type="number"
+                value={editingProduct.price}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    price: Number(e.target.value),
+                  })
+                }
+                style={{ marginLeft: "5px" }}
+              />
+              <span style={{ marginLeft: "10px" }}>Quantity:</span>
+              <input
+                type="number"
+                value={editingProduct.countInStock}
+                onChange={(e) =>
+                  setEditingProduct({
+                    ...editingProduct,
+                    countInStock: Number(e.target.value),
+                  })
+                }
+                style={{ marginLeft: "5px" }}
+              />
+            </div>
             <button
               onClick={() =>
                 handleUpdate(
@@ -236,10 +311,16 @@ function AdminScreen() {
                   setEditingProduct,
                 )
               }
+              style={{ marginTop: "5px" }}
             >
               Save
             </button>
-            <button onClick={() => setEditingProduct(null)}>Cancel</button>
+            <button
+              onClick={() => setEditingProduct(null)}
+              style={{ marginTop: "5px", marginLeft: "5px" }}
+            >
+              Cancel
+            </button>
           </div>
         )}
 

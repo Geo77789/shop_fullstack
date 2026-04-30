@@ -32,6 +32,8 @@ export const createOrder = asyncHandler(async (req, res) => {
         image: item.product.image,
         price: item.product.price,
         product: item.product._id,
+        // Possible to add and category?!
+
     }));
 
 
@@ -42,6 +44,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     const order = new Order({
         user: userId,
         OrderItems: orderItems,
+        shippingAddress,
         totalPrice,
     });
 

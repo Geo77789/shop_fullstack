@@ -1,14 +1,37 @@
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
+import { getCart } from "../../utils/cartUtils";
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
 
   const logoutHandler = () => {
     logout();
     navigate("/login");
   };
+
+  // Function which calculate the total number of items in the cart
+  const updateCount = async () => {
+    try {
+      const cart = await getCart();
+      const totalItemsInCart = cart.items.reduce(
+        (acc, item) => acc + item.quantity,
+        0,
+      );
+      setCartCount(totalItemsInCart);
+    } catch (err) {
+      setCartCount(0);
+    }
+  };
+  useEffect(() => {
+    updateCount();
+    // Add event listener to update the count when the cart is updated
+    window.addEventListener("cartUpdated", updateCount);
+    return () => window.removeEventListener("cartUpdated", updateCount);
+  }, []);
 
   return (
     <nav
@@ -35,7 +58,23 @@ function Navbar() {
       </Link>
 
       <Link to="/cart" style={{ color: "white" }}>
-        Cart 🛒
+        {cartCount > 0 && (
+          <span
+            style={{
+              // position: "absolute",
+              // top: "-10px",
+              // right: "-10px",
+              background: "red",
+              color: "white",
+              borderRadius: "25%",
+              padding: "2px 6px",
+              fontSize: "20px",
+              fontWeight: "bold",
+            }}
+          >
+            {cartCount} 🛒
+          </span>
+        )}
       </Link>
       {/* 2. NAVIGATION LINKS */}
 

@@ -10,7 +10,8 @@ import ProtectedRoute from "./Components/ProtectedRoutes";
 import { AuthProvider } from "./context/authContext.jsx";
 import AdminScreen from "./Components/AdminDashboard/AdminScreen.jsx";
 import OrderDetails from "./Components/Pages/OrderDetails.jsx";
-// import { useAuth } from "./context/authContext.jsx";
+import OrderScreen from "./Components/Pages/OrderScreen.jsx";
+import Footer from "./Components/Pages/Footer.jsx";
 
 function App() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -41,6 +42,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/checkout" element={<OrderScreen />}></Route>
           <Route
             path="/admin"
             element={
@@ -49,6 +51,8 @@ function App() {
           />
           <Route path="/order/:id" element={<OrderDetails />} />
         </Routes>
+
+        <Footer />
       </BrowserRouter>
     </AuthProvider>
   );

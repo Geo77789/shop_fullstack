@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCart, addToCart, removeFromCart } from "../../utils/cartUtils";
-import { placeOrder } from "../../utils/cartUtils";
+// import { placeOrder } from "../../utils/cartUtils";
 import { useNavigate } from "react-router-dom";
 
 function Cart() {
@@ -11,21 +11,26 @@ function Cart() {
   const navigate = useNavigate();
 
   const handleCheckout = async () => {
-    try {
-      setUpdatingId(true);
-      const createOrder = await placeOrder();
-
-      alert(`Order placed successfully! Order ID: ${createOrder._id}`);
-
-      // empty the cart (backend already does this)
-      setCart([]);
-
-      navigate("/order/${createdOrder._id}");
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setUpdatingId(false);
+    if (cart.length === 0) {
+      alert("Your cart is empty!");
+      return;
     }
+    // try {
+    //   setUpdatingId(true);
+    //   const createdOrder = await placeOrder();
+
+    //   alert(`Order placed successfully! Order ID: ${createdOrder._id}`);
+
+    //   // empty the cart (backend already does this)
+    //   setCart([]);
+
+    //
+    // } catch (err) {
+    //   alert(err.message);
+    // } finally {
+    //   setUpdatingId(false);
+    // }
+    navigate("/checkout");
   };
 
   const fetchCart = async () => {
@@ -51,6 +56,8 @@ function Cart() {
       setUpdatingId(true); // set updatingId to prevent concurrent updates
       const updatedCart = await addToCart(productId, delta);
       setCart(updatedCart.items || []);
+
+      window.dispatchEvent(new Event("cartUpdated"));
     } catch (err) {
       setError(err.message);
 
@@ -66,6 +73,8 @@ function Cart() {
       setUpdatingId(true);
       const updatedCart = await removeFromCart(productId);
       setCart(updatedCart?.items || []);
+
+      window.dispatchEvent(new Event("cartUpdated"));
     } catch (err) {
       setError(err.message);
       fetchCart();
@@ -150,7 +159,7 @@ function Cart() {
 
       <h2>Total: ${total.toFixed(2)}</h2>
       <button
-        onClick={() => handleCheckout}
+        onClick={handleCheckout}
         disabled={cart.length === 0 || updatingId}
         style={{
           backgroundColor: "#28a745",
